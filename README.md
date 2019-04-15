@@ -1,6 +1,6 @@
 # QTermWidget
 ## Overview
-Just Make it work in ms windowns.
+Just Make it work in ms windows.
 
 ```
 # QTermWidget
