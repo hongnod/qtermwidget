@@ -1,7 +1,6 @@
 # QTermWidget
-
 ## Overview
-Just make it work in windows.
+Just Make it work in ms windowns.
 
 ```
 # QTermWidget
@@ -16,7 +15,7 @@ The main goal of this project is to provide a unicode-enabled, embeddable Qt wid
 It is compatible with BSD, Linux and OS X.
 
 This project is licensed under the terms of the [GPLv2](https://www.gnu.org/licenses/gpl-2.0.en.html) or any later version. See the LICENSE file for the full text of the license. Some files are published under compatible licenses:
-```
+
 Files: example/main.cpp
        lib/TerminalCharacterDecoder.cpp
        lib/TerminalCharacterDecoder.h
@@ -52,7 +51,7 @@ License: BSD-3-clause
 
 Files: pyqt/cmake/PythonCompile.py
 License: public-domain
-```
+
 
 ## Installation
 
@@ -76,4 +75,5 @@ Just use the distributions' package managers to search for string `qtermwidget`.
 <a href="https://weblate.lxqt.org/projects/lxqt/qtermwidget/">
 <img src="https://weblate.lxqt.org/widgets/lxqt/-/qtermwidget/multi-auto.svg" alt="Translation status" />
 </a>
+
 ```
