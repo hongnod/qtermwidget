@@ -1,6 +1,12 @@
 # QTermWidget
 
 ## Overview
+Just make it work in windows.
+
+```
+# QTermWidget
+
+## Overview
 
 A terminal emulator widget for Qt 5.
 
@@ -70,3 +76,4 @@ Just use the distributions' package managers to search for string `qtermwidget`.
 <a href="https://weblate.lxqt.org/projects/lxqt/qtermwidget/">
 <img src="https://weblate.lxqt.org/widgets/lxqt/-/qtermwidget/multi-auto.svg" alt="Translation status" />
 </a>
+```
