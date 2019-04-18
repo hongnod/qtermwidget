@@ -29,7 +29,6 @@
 #include <QWidget>
 
 #include "Emulation.h"
-#include "History.h"
 
 class KProcess;
 
@@ -375,6 +374,8 @@ public:
 
 public slots:
 
+    void onParse(const QByteArray& buf);
+
     /**
      * Starts the terminal session.
      *
@@ -514,7 +515,7 @@ private:
 
     int            _uniqueIdentifier;
 
-    Pty     *_shellProcess;
+
     Emulation  *  _emulation;
 
     QList<TerminalDisplay *> _views;

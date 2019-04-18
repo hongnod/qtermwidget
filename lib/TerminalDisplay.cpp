@@ -59,7 +59,7 @@
 // Konsole
 //#include <config-apps.h>
 #include "Filter.h"
-#include "konsole_wcwidth.h"
+#include "wcwidth.h"
 #include "ScreenWindow.h"
 #include "TerminalCharacterDecoder.h"
 
@@ -123,6 +123,7 @@ ScreenWindow* TerminalDisplay::screenWindow() const
 {
     return _screenWindow;
 }
+
 void TerminalDisplay::setScreenWindow(ScreenWindow* window)
 {
     // disconnect existing screen window if any
@@ -154,12 +155,10 @@ void TerminalDisplay::setBackgroundColor(const QColor& color)
 {
     _colorTable[DEFAULT_BACK_COLOR].color = color;
     QPalette p = palette();
-      p.setColor( backgroundRole(), color );
-      setPalette( p );
-
-      // Avoid propagating the palette change to the scroll bar
-      _scrollBar->setPalette( QApplication::palette() );
-
+    p.setColor( backgroundRole(), color );
+    setPalette( p );
+    // Avoid propagating the palette change to the scroll bar
+    _scrollBar->setPalette( QApplication::palette() );
     update();
 }
 void TerminalDisplay::setForegroundColor(const QColor& color)
@@ -170,10 +169,11 @@ void TerminalDisplay::setForegroundColor(const QColor& color)
 }
 void TerminalDisplay::setColorTable(const ColorEntry table[])
 {
-  for (int i = 0; i < TABLE_COLORS; i++)
-      _colorTable[i] = table[i];
-
-  setBackgroundColor(_colorTable[DEFAULT_BACK_COLOR].color);
+    for (int i = 0; i < TABLE_COLORS; i++){
+        _colorTable[i] = table[i];
+        qDebug() << table[i].color;
+    }
+    setBackgroundColor(_colorTable[DEFAULT_BACK_COLOR].color);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -269,7 +269,7 @@ void TerminalDisplay::calDrawTextAdditionHeight(QPainter& painter)
 
 void TerminalDisplay::setVTFont(const QFont& f)
 {
-  QFont font = f;
+    QFont font = f;
 
     // This was originally set for OS X only:
     //     mac uses floats for font width specification.
@@ -877,9 +877,9 @@ void TerminalDisplay::drawTextFragment(QPainter& painter ,
     const QColor backgroundColor = style->backgroundColor.color(_colorTable);
 
     // draw background if different from the display's background color
-    if ( backgroundColor != palette().background().color() ){
-        drawBackground(painter,rect,backgroundColor, false /* do not use transparency */);
-    }
+    if ( backgroundColor != palette().background().color() )
+        drawBackground(painter,rect,backgroundColor,
+                       false /* do not use transparency */);
 
     // draw cursor shape if the current character is the cursor
     // this may alter the foreground and background colors

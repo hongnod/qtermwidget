@@ -27,15 +27,8 @@
 #include <QVector>
 #include <QTemporaryFile>
 
-// KDE
-//#include <ktemporaryfile.h>
-
 // Konsole
-#include "BlockArray.h"
 #include "Character.h"
-
-// map
-#include <sys/mman.h>
 
 namespace Konsole
 {
@@ -237,28 +230,6 @@ public:
 };
 
 //////////////////////////////////////////////////////////////////////
-// BlockArray-based history
-//////////////////////////////////////////////////////////////////////
-class HistoryScrollBlockArray : public HistoryScroll
-{
-public:
-  HistoryScrollBlockArray(size_t size);
-  virtual ~HistoryScrollBlockArray();
-
-  virtual int  getLines();
-  virtual int  getLineLen(int lineno);
-  virtual void getCells(int lineno, int colno, int count, Character res[]);
-  virtual bool isWrappedLine(int lineno);
-
-  virtual void addCells(const Character a[], int count);
-  virtual void addLine(bool previousWrapped=false);
-
-protected:
-  BlockArray m_blockArray;
-  QHash<int,size_t> m_lineLengths;
-};
-
-//////////////////////////////////////////////////////////////////////
 // History using compact storage
 // This implementation uses a list of fixed-sized blocks
 // where history lines are allocated in (avoids heap fragmentation)
@@ -285,104 +256,6 @@ public:
   CharacterColor fgColor, bgColor;
   quint16 startPos;
   quint8 rendition;
-};
-
-class CompactHistoryBlock
-{
-public:
-
-  CompactHistoryBlock(){
-    blockLength = 4096*64; // 256kb
-    head = (quint8*) mmap(0, blockLength, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, -1, 0);
-    //head = (quint8*) malloc(blockLength);
-    Q_ASSERT(head != MAP_FAILED);
-    tail = blockStart = head;
-    allocCount=0;
-  }
-
-  virtual ~CompactHistoryBlock(){
-    //free(blockStart);
-    munmap(blockStart, blockLength);
-  }
-
-  virtual unsigned int remaining(){ return blockStart+blockLength-tail;}
-  virtual unsigned  length() { return blockLength; }
-  virtual void* allocate(size_t length);
-  virtual bool contains(void *addr) {return addr>=blockStart && addr<(blockStart+blockLength);}
-  virtual void deallocate();
-  virtual bool isInUse(){ return allocCount!=0; } ;
-
-private:
-  size_t blockLength;
-  quint8* head;
-  quint8* tail;
-  quint8* blockStart;
-  int allocCount;
-};
-
-class CompactHistoryBlockList {
-public:
-  CompactHistoryBlockList() {};
-  ~CompactHistoryBlockList();
-
-  void *allocate( size_t size );
-  void deallocate(void *);
-  int length() {return list.size();}
-private:
-  QList<CompactHistoryBlock*> list;
-};
-
-class CompactHistoryLine
-{
-public:
-  CompactHistoryLine(const TextLine&, CompactHistoryBlockList& blockList);
-  virtual ~CompactHistoryLine();
-
-  // custom new operator to allocate memory from custom pool instead of heap
-  static void *operator new( size_t size, CompactHistoryBlockList& blockList);
-  static void operator delete( void *) { /* do nothing, deallocation from pool is done in destructor*/ } ;
-
-  virtual void getCharacters(Character* array, int length, int startColumn) ;
-  virtual void getCharacter(int index, Character &r) ;
-  virtual bool isWrapped() const {return wrapped;};
-  virtual void setWrapped(bool isWrapped) { wrapped=isWrapped;};
-  virtual unsigned int getLength() const {return length;};
-
-protected:
-  CompactHistoryBlockList& blockList;
-  CharacterFormat* formatArray;
-  quint16 length;
-  quint16* text;
-  quint16 formatLength;
-  bool wrapped;
-};
-
-class CompactHistoryScroll : public HistoryScroll
-{
-  typedef QList<CompactHistoryLine*> HistoryArray;
-
-public:
-  CompactHistoryScroll(unsigned int maxNbLines = 1000);
-  virtual ~CompactHistoryScroll();
-
-  virtual int  getLines();
-  virtual int  getLineLen(int lineno);
-  virtual void getCells(int lineno, int colno, int count, Character res[]);
-  virtual bool isWrappedLine(int lineno);
-
-  virtual void addCells(const Character a[], int count);
-  virtual void addCellsVector(const TextLine& cells);
-  virtual void addLine(bool previousWrapped=false);
-
-  void setMaxNbLines(unsigned int nbLines);
-  unsigned int maxNbLines() const { return _maxLineCount; }
-
-private:
-  bool hasDifferentColors(const TextLine& line) const;
-  HistoryArray lines;
-  CompactHistoryBlockList blockList;
-
-  unsigned int _maxLineCount;
 };
 
 //////////////////////////////////////////////////////////////////////

@@ -9,6 +9,8 @@
 By default the KB_LAYOUT_DIR is used (linux/BSD/macports).
 But in some cases (apple bundle) there can be more locations).
 */
+
+#define KB_LAYOUT_DIR "./kb-layouts"
 QString get_kb_layout_dir()
 {
 //    qDebug() << __FILE__ << __FUNCTION__;
@@ -54,6 +56,9 @@ void add_custom_color_scheme_dir(const QString& custom_dir)
 By default the COLORSCHEMES_DIR is used (linux/BSD/macports).
 But in some cases (apple bundle) there can be more locations).
 */
+
+#define COLORSCHEMES_DIR "/color-schemes"
+
 const QStringList get_color_schemes_dirs()
 {
 //    qDebug() << __FILE__ << __FUNCTION__;
@@ -62,7 +67,7 @@ const QStringList get_color_schemes_dirs()
     QString k(QLatin1String(COLORSCHEMES_DIR));
     QDir d(k);
 
-//    qDebug() << "default COLORSCHEMES_DIR: " << k;
+    qDebug() << "default COLORSCHEMES_DIR: " << k;
 
     if (d.exists())
         rval << k.append(QLatin1Char('/'));

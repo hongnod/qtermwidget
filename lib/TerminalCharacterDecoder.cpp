@@ -29,7 +29,7 @@
 //#include <kdebug.h>
 
 // Konsole
-#include "konsole_wcwidth.h"
+#include "wcwidth.h"
 
 using namespace Konsole;
 PlainTextDecoder::PlainTextDecoder()
@@ -39,20 +39,24 @@ PlainTextDecoder::PlainTextDecoder()
 {
 
 }
+
 void PlainTextDecoder::setTrailingWhitespace(bool enable)
 {
     _includeTrailingWhitespace = enable;
 }
+
 bool PlainTextDecoder::trailingWhitespace() const
 {
     return _includeTrailingWhitespace;
 }
+
 void PlainTextDecoder::begin(QTextStream* output)
 {
    _output = output;
    if (!_linePositions.isEmpty())
        _linePositions.clear();
 }
+
 void PlainTextDecoder::end()
 {
     _output = 0;
@@ -66,8 +70,8 @@ QList<int> PlainTextDecoder::linePositions() const
 {
     return _linePositions;
 }
-void PlainTextDecoder::decodeLine(const Character* const characters, int count, LineProperty /*properties*/
-                             )
+
+void PlainTextDecoder::decodeLine(const Character* const characters, int count, LineProperty /*properties*/)
 {
     Q_ASSERT( _output );
 
@@ -103,7 +107,7 @@ void PlainTextDecoder::decodeLine(const Character* const characters, int count, 
     for (int i=0;i<outputCount;)
     {
         plainText.push_back( characters[i].character );
-        i += qMax(1,konsole_wcwidth(characters[i].character));
+        i += qMax(1, char_width(characters[i].character));
     }
     *_output << QString::fromStdWString(plainText);
 }

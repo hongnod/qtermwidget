@@ -275,9 +275,12 @@ void ColorScheme::read(const QString & fileName)
     QSettings s(fileName, QSettings::IniFormat);
     s.beginGroup(QLatin1String("General"));
 
+
     _description = s.value(QLatin1String("Description"), QObject::tr("Un-named Color Scheme")).toString();
     _opacity = s.value(QLatin1String("Opacity"),qreal(1.0)).toDouble();
     s.endGroup();
+
+    qDebug() << "fileName:" << fileName << " - Desc:" << _description << " - opacity:" << _opacity;
 
     for (int i=0 ; i < TABLE_COLORS ; i++)
     {

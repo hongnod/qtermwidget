@@ -1141,12 +1141,8 @@ void Vt102Emulation::sendKeyEvent( QKeyEvent* event )
 
 wchar_t Vt102Emulation::applyCharset(wchar_t c)
 {
-  if (CHARSET.graphic && 0x5f <= c && c <= 0x7e) {
-      return vt100_graphics[c - 0x5f];
-  }
-  if (CHARSET.pound && c == '#' ) {
-      return 0xa3; //This mode is obsolete
-  }
+  if (CHARSET.graphic && 0x5f <= c && c <= 0x7e) return vt100_graphics[c-0x5f];
+  if (CHARSET.pound && c == '#' ) return 0xa3; //This mode is obsolete
   return c;
 }
 

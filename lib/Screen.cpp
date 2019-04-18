@@ -38,8 +38,10 @@
 //#include <kdebug.h>
 
 // Konsole
-#include "konsole_wcwidth.h"
+#include "wcwidth.h"
 #include "TerminalCharacterDecoder.h"
+
+#include "History.h"
 
 using namespace Konsole;
 
@@ -651,7 +653,7 @@ void Screen::displayCharacter(wchar_t c)
     // We indicate the fact that a newline has to be triggered by
     // putting the cursor one right to the last column of the screen.
 
-    int w = konsole_wcwidth(c);
+    int w = char_width(c);
     if (w <= 0)
         return;
 

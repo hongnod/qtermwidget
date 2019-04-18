@@ -21,6 +21,8 @@
 #include <QtDebug>
 #include <QDir>
 #include <QMessageBox>
+#include <QMetaObject>
+#include <QObject>
 
 #include "ColorTables.h"
 #include "Session.h"
@@ -32,6 +34,7 @@
 #include "ColorScheme.h"
 #include "SearchBar.h"
 #include "qtermwidget.h"
+
 
 #ifdef Q_OS_MACOS
 // Qt does not support fontconfig on macOS, so we need to use a "real" font name.
@@ -119,7 +122,7 @@ TerminalDisplay *TermWidgetImpl::createTerminalDisplay(Session *session, QWidget
 QTermWidget::QTermWidget(int startnow, QWidget *parent)
     : QWidget(parent)
 {
-    init(startnow);
+    init(startnow);   
 }
 
 QTermWidget::QTermWidget(QWidget *parent)
@@ -131,6 +134,20 @@ QTermWidget::QTermWidget(QWidget *parent)
 void QTermWidget::selectionChanged(bool textSelected)
 {
     emit copyAvailable(textSelected);
+}
+
+void QTermWidget::onKeyPressedSignal(QKeyEvent *e)
+{
+    QByteArray data;
+    switch (e->key()) {
+    case Qt::Key_Backspace:
+        data.push_back(char(8));
+        break;
+    case Qt::Key_F1:
+        //parse("\x1B[2J\x1B[3g\x1B[1;1H\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[3C\x1BH\x1B[1;4H\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[0g\x1B[6C\x1B[1;7H\x1B[1g\x1B[2g\x1B[1;1H\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\t*\x1B[2;2H     *     *     *     *     *     *     *     *     *     *     *     *     *\x1B[4;1HTest of TAB setting/resetting. These two lines\r\nshould look the same. Push <RETURN>");
+        parse("\x1B[?5h\x1B[?3h\x1B[2J\x1B[1;1H\x1B[3g\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[8C\x1BH\x1B[1;1H12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901\x1B[3;3HThis is 132 column mode, light background.\x1B[4;4HThis is 132 column mode, light background.\x1B[5;5HThis is 132 column mode, light background.\x1B[6;6HThis is 132 column mode, light background.\x1B[7;7HThis is 132 column mode, light background.\x1B[8;8HThis is 132 column mode, light background.\x1B[9;9HThis is 132 column mode, light background.\x1B[10;10HThis is 132 column mode, light background.\x1B[11;11HThis is 132 column mode, light background.\x1B[12;12HThis is 132 column mode, light background.\x1B[13;13HThis is 132 column mode, light background.\x1B[14;14HThis is 132 column mode, light background.\x1B[15;15HThis is 132 column mode, light background.\x1B[16;16HThis is 132 column mode, light background.\x1B[17;17HThis is 132 column mode, light background.\x1B[18;18HThis is 132 column mode, light background.\x1B[19;19HThis is 132 column mode, light background.\x1B[20;20HThis is 132 column mode, light background.Push <RETURN>");
+        break;
+    }
 }
 
 void QTermWidget::find()
@@ -256,6 +273,8 @@ void QTermWidget::startTerminalTeletype()
              this, SIGNAL(sendData(const char *,int)) );
 }
 
+#define TRANSLATIONS_DIR "./translations"
+
 void QTermWidget::init(int startnow)
 {
     m_layout = new QVBoxLayout();
@@ -342,6 +361,10 @@ void QTermWidget::init(int startnow)
     connect(m_impl->m_session, SIGNAL(finished()), this, SLOT(sessionFinished()));
     connect(m_impl->m_session, &Session::titleChanged, this, &QTermWidget::titleChanged);
     connect(m_impl->m_session, &Session::cursorChanged, this, &QTermWidget::cursorChanged);
+
+    setFocusPolicy(Qt::StrongFocus);
+    bool ok = QObject::connect(m_impl->m_terminalDisplay, SIGNAL(keyPressedSignal(QKeyEvent*)), this, SLOT(onKeyPressedSignal(QKeyEvent*)));
+    qDebug() << "connect" << ok;
 }
 
 
@@ -467,8 +490,10 @@ QStringList QTermWidget::availableColorSchemes()
 {
     QStringList ret;
     const auto allColorSchemes = ColorSchemeManager::instance()->allColorSchemes();
-    for (const ColorScheme* cs : allColorSchemes)
+    for (const ColorScheme* cs : allColorSchemes) {
         ret.append(cs->name());
+        qDebug() << "name:" << cs->name();
+    }
     return ret;
 }
 
@@ -511,6 +536,10 @@ void QTermWidget::resizeEvent(QResizeEvent*)
     m_impl->m_terminalDisplay->resize(this->size());
 }
 
+void QTermWidget::parse(const QByteArray &buf)
+{
+    QMetaObject::invokeMethod(m_impl->m_session, "onParse", Qt::QueuedConnection, Q_ARG(QByteArray, buf));
+}
 
 void QTermWidget::sessionFinished()
 {

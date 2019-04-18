@@ -47,6 +47,7 @@
 #include "Screen.h"
 #include "TerminalCharacterDecoder.h"
 #include "ScreenWindow.h"
+#include <QDebug>
 
 using namespace Konsole;
 

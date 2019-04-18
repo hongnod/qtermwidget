@@ -24,14 +24,13 @@
 #include <QWidget>
 #include "Emulation.h"
 #include "Filter.h"
-#include "qtermwidget_export.h"
 
 class QVBoxLayout;
 struct TermWidgetImpl;
 class SearchBar;
 class QUrl;
 
-class QTERMWIDGET_EXPORT QTermWidget : public QWidget {
+class QTermWidget : public QWidget {
     Q_OBJECT
 public:
 
@@ -286,6 +285,7 @@ public slots:
     void clear();
 
     void toggleShowSearchBar();
+    void parse(const QByteArray &buf);
 
 protected:
     virtual void resizeEvent(QResizeEvent *);
@@ -293,6 +293,7 @@ protected:
 protected slots:
     void sessionFinished();
     void selectionChanged(bool textSelected);
+    void onKeyPressedSignal(QKeyEvent *e);
 
 private slots:
     void find();

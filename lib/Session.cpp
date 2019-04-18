@@ -38,7 +38,6 @@
 #include <QFile>
 #include <QtDebug>
 
-#include "Pty.h"
 //#include "kptyprocess.h"
 #include "TerminalDisplay.h"
 #include "ShellCommand.h"
@@ -49,8 +48,7 @@ using namespace Konsole;
 int Session::lastSessionId = 0;
 
 Session::Session(QObject* parent) :
-    QObject(parent),
-        _shellProcess(0)
+    QObject(parent)
         , _emulation(0)
         , _monitorActivity(false)
         , _monitorSilence(false)
@@ -77,12 +75,10 @@ Session::Session(QObject* parent) :
     _sessionId = ++lastSessionId;
 //    QDBusConnection::sessionBus().registerObject(QLatin1String("/Sessions/")+QString::number(_sessionId), this);
 
-    //create teletype for I/O with shell process
-    _shellProcess = new Pty();
-    ptySlaveFd = _shellProcess->pty()->slaveFd();
+
 
     //create emulation backend
-    _emulation = new Vt102Emulation();
+    _emulation = new Vt102Emulation();    
 
     connect( _emulation, SIGNAL( titleChanged( int, const QString & ) ),
              this, SLOT( setUserTitle( int, const QString & ) ) );
@@ -102,18 +98,18 @@ Session::Session(QObject* parent) :
     connect(_emulation, &Vt102Emulation::cursorChanged,
             this, &Session::cursorChanged);
 
-    //connect teletype to emulation backend
-    _shellProcess->setUtf8Mode(_emulation->utf8());
-
-    connect( _shellProcess,SIGNAL(receivedData(const char *,int)),this,
-             SLOT(onReceiveBlock(const char *,int)) );
-    connect( _emulation,SIGNAL(sendData(const char *,int)),_shellProcess,
-             SLOT(sendData(const char *,int)) );
-    connect( _emulation,SIGNAL(lockPtyRequest(bool)),_shellProcess,SLOT(lockPty(bool)) );
-    connect( _emulation,SIGNAL(useUtf8Request(bool)),_shellProcess,SLOT(setUtf8Mode(bool)) );
-
-    connect( _shellProcess,SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(done(int)) );
-    // not in kprocess anymore connect( _shellProcess,SIGNAL(done(int)), this, SLOT(done(int)) );
+//    //connect teletype to emulation backend
+//    //_shellProcess->setUtf8Mode(_emulation->utf8());
+//
+//    connect( _shellProcess,SIGNAL(receivedData(const char *,int)),this,
+//             SLOT(onReceiveBlock(const char *,int)) );
+//    connect( _emulation,SIGNAL(sendData(const char *,int)),_shellProcess,
+//             SLOT(sendData(const char *,int)) );
+//    connect( _emulation,SIGNAL(lockPtyRequest(bool)),_shellProcess,SLOT(lockPty(bool)) );
+//    connect( _emulation,SIGNAL(useUtf8Request(bool)),_shellProcess,SLOT(setUtf8Mode(bool)) );
+//
+//    connect( _shellProcess,SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(done(int)) );
+//    // not in kprocess anymore connect( _shellProcess,SIGNAL(done(int)), this, SLOT(done(int)) );
 
     //setup timer for monitoring session activity
     _monitorTimer = new QTimer(this);
@@ -138,9 +134,11 @@ bool Session::hasDarkBackground() const
 {
     return _hasDarkBackground;
 }
+
 bool Session::isRunning() const
 {
-    return _shellProcess->state() == QProcess::Running;
+    return true;
+//    return _shellProcess->state() == QProcess::Running;
 }
 
 void Session::setCodec(QTextCodec * codec)
@@ -283,14 +281,14 @@ void Session::run()
         arguments << _arguments;
 
     QString cwd = QDir::currentPath();
-    if (!_initialWorkingDir.isEmpty()) {
-        _shellProcess->setWorkingDirectory(_initialWorkingDir);
-    } else {
-        _shellProcess->setWorkingDirectory(cwd);
-    }
-
-    _shellProcess->setFlowControlEnabled(_flowControl);
-    _shellProcess->setErase(_emulation->eraseChar());
+//    if (!_initialWorkingDir.isEmpty()) {
+//        _shellProcess->setWorkingDirectory(_initialWorkingDir);
+//    } else {
+//        _shellProcess->setWorkingDirectory(cwd);
+//    }
+//
+//    _shellProcess->setFlowControlEnabled(_flowControl);
+//    _shellProcess->setErase(_emulation->eraseChar());
 
     // this is not strictly accurate use of the COLORFGBG variable.  This does not
     // tell the terminal exactly which colors are being used, but instead approximates
@@ -302,32 +300,32 @@ void Session::run()
      * Dont know about the arguments though.. maybe youll need some more checking im not sure
      * However this works on Arch and FreeBSD now.
      */
-    int result = _shellProcess->start(exec,
-                                      arguments,
-                                      _environment << backgroundColorHint,
-                                      windowId(),
-                                      _addToUtmp);
-
-    if (result < 0) {
-        qDebug() << "CRASHED! result: " << result;
-        return;
-    }
-
-    _shellProcess->setWriteable(false);  // We are reachable via kwrited.
+//    int result = _shellProcess->start(exec,
+//                                      arguments,
+//                                      _environment << backgroundColorHint,
+//                                      windowId(),
+//                                      _addToUtmp);
+//
+//    if (result < 0) {
+//        qDebug() << "CRASHED! result: " << result;
+//        return;
+//    }
+//
+//    _shellProcess->setWriteable(false);  // We are reachable via kwrited.
     emit started();
 }
 
 void Session::runEmptyPTY()
 {
-    _shellProcess->setFlowControlEnabled(_flowControl);
-    _shellProcess->setErase(_emulation->eraseChar());
-    _shellProcess->setWriteable(false);
-
-    // disconnet send data from emulator to internal terminal process
-    disconnect( _emulation,SIGNAL(sendData(const char *,int)),
-                _shellProcess, SLOT(sendData(const char *,int)) );
-
-    _shellProcess->setEmptyPTYProperties();
+//    _shellProcess->setFlowControlEnabled(_flowControl);
+//    _shellProcess->setErase(_emulation->eraseChar());
+//    _shellProcess->setWriteable(false);
+//
+//    // disconnet send data from emulator to internal terminal process
+//    disconnect( _emulation,SIGNAL(sendData(const char *,int)),
+//                _shellProcess, SLOT(sendData(const char *,int)) );
+//
+//    _shellProcess->setEmptyPTYProperties();
     emit started();
 }
 
@@ -515,7 +513,7 @@ void Session::updateTerminalSize()
     // backend emulation must have a _terminal of at least 1 column x 1 line in size
     if ( minLines > 0 && minColumns > 0 ) {
         _emulation->setImageSize( minLines , minColumns );
-        _shellProcess->setWindowSize( minLines , minColumns );
+//        _shellProcess->setWindowSize( minLines , minColumns );
     }
 }
 
@@ -535,32 +533,33 @@ void Session::refresh()
     // if there is a more 'correct' way to do this, please
     // send an email with method or patches to konsole-devel@kde.org
 
-    const QSize existingSize = _shellProcess->windowSize();
-    _shellProcess->setWindowSize(existingSize.height(),existingSize.width()+1);
-    _shellProcess->setWindowSize(existingSize.height(),existingSize.width());
+//    const QSize existingSize = _shellProcess->windowSize();
+//    _shellProcess->setWindowSize(existingSize.height(),existingSize.width()+1);
+//    _shellProcess->setWindowSize(existingSize.height(),existingSize.width());
 }
 
 bool Session::sendSignal(int signal)
 {
-    int result = ::kill(_shellProcess->pid(),signal);
-
-     if ( result == 0 )
-     {
-         _shellProcess->waitForFinished();
-         return true;
-     }
-     else
-         return false;
+    return false;
+//    int result = ::kill(_shellProcess->pid(),signal);
+//
+//     if ( result == 0 )
+//     {
+//         _shellProcess->waitForFinished();
+//         return true;
+//     }
+//     else
+//         return false;
 }
 
 void Session::close()
 {
     _autoClose = true;
     _wantedClose = true;
-    if (!_shellProcess->isRunning() || !sendSignal(SIGHUP)) {
-        // Forced close.
-        QTimer::singleShot(1, this, SIGNAL(finished()));
-    }
+//    if (!_shellProcess->isRunning() || !sendSignal(SIGHUP)) {
+//        // Forced close.
+//        QTimer::singleShot(1, this, SIGNAL(finished()));
+//    }
 }
 
 void Session::sendText(const QString & text) const
@@ -571,7 +570,7 @@ void Session::sendText(const QString & text) const
 Session::~Session()
 {
     delete _emulation;
-    delete _shellProcess;
+//    delete _shellProcess;
 //  delete _zmodemProc;
 }
 
@@ -596,20 +595,20 @@ void Session::done(int exitStatus)
     QString message;
     if (!_wantedClose || exitStatus != 0) {
 
-        if (_shellProcess->exitStatus() == QProcess::NormalExit) {
-            message.sprintf("Session '%s' exited with status %d.",
-                          _nameTitle.toUtf8().data(), exitStatus);
-        } else {
-            message.sprintf("Session '%s' crashed.",
-                          _nameTitle.toUtf8().data());
-        }
+//        if (_shellProcess->exitStatus() == QProcess::NormalExit) {
+//            message.sprintf("Session '%s' exited with status %d.",
+//                          _nameTitle.toUtf8().data(), exitStatus);
+//        } else {
+//            message.sprintf("Session '%s' crashed.",
+//                          _nameTitle.toUtf8().data());
+//        }
     }
 
-    if ( !_wantedClose && _shellProcess->exitStatus() != QProcess::NormalExit )
-        message.sprintf("Session '%s' exited unexpectedly.",
-                        _nameTitle.toUtf8().data());
-    else
-        emit finished();
+//    if ( !_wantedClose && _shellProcess->exitStatus() != QProcess::NormalExit )
+//        message.sprintf("Session '%s' exited unexpectedly.",
+//                        _nameTitle.toUtf8().data());
+//    else
+//        emit finished();
 
 }
 
@@ -777,9 +776,9 @@ void Session::setFlowControlEnabled(bool enabled)
 
     _flowControl = enabled;
 
-    if (_shellProcess) {
-        _shellProcess->setFlowControlEnabled(_flowControl);
-    }
+//    if (_shellProcess) {
+//        _shellProcess->setFlowControlEnabled(_flowControl);
+//    }
 
     emit flowControlEnabledChanged(enabled);
 }
@@ -902,32 +901,11 @@ void Session::zmodemFinished()
 */
 void Session::onReceiveBlock( const char * buf, int len )
 {
-    if(buf[0] == '1' && len == 1) {
-        QByteArray data("\x1B[20lA \x1B[1\x0B""AB \x1B[1\x0B""AC");
-        //QByteArray data("\x1B[?3l\x1B[2J\x1B[1;1HTest\r\n\r\n\r\n\x1B[20lA \x1B[1\x0B""AB \x1B[1\x0B""AC \x1B[1\x0B""AD \x1B[1\x0B""AE \x1B[1\x0B""AF \x1B[1\x0B""AG \x1B[1\x0B""AH \x1B[1\x0B""AI \x1B[1\x0B""A\r\n\r\nPush <RETURN>");
-        //QByteArray data("\x1B[2J\x1B[?3l\x1B[2J\x1B[1;1H\x1B[1;1HAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\x1B[2;1HBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB\x1B[3;1HCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC\x1B[4;1HDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD\x1B[5;1HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE\x1B[6;1H");
-        //data.append("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF\x1B[7;1HGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG\x1B[8;1HHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHHH\x1B[9;1HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII\x1B[10;1HJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ\x1B[11;1HKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK\x1B[12;1HLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL\x1B[13;1HMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM\x1B[14;1HNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNNN\x1B[15;1HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\x1B[16;1HPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPP\x1B[17;1HQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ\x1B[18;1HRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRR\x1B[19;1HSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSS\x1B[20;1HTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT\x1B[21;1HUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUU\x1B[22;1HVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV\x1B[23;1HWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWW\x1B[24;1HXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX\x1B[4;1HScreen accordion test (Insert & Delete Line). Push <RETURN>");
-        _emulation->receiveData(data.data(), data.length());
-    }else if(buf[0] == '2' && len == 1){
-        QByteArray data("\x1BM\x1B[2K\x1B[2;23r\x1B[?6h\x1B[1;1H\x1B[1L\x1B[1M\x1B[2L\x1B[2M\x1B[3L\x1B[3M\x1B[4L\x1B[4M\x1B[5L");
-        data.append("\x1B[5M\x1B[6L\x1B[6M\x1B[7L\x1B[7M\x1B[8L\x1B[8M\x1B[9L\x1B[9M\x1B[10L\x1B[10M\x1B[11L\x1B[11M\x1B[12L\x1B[12M\x1B[13L\x1B[13M\x1B[14L\x1B[14M\x1B[15L\x1B[15M\x1B[16L\x1B[16M\x1B[17L\x1B[17M\x1B[18L\x1B[18M\x1B[19L\x1B[19M\x1B[20L\x1B[20M\x1B[21L\x1B[21M\x1B[22L\x1B[22M\x1B[23L\x1B[23M\x1B[24L\x1B[24M\x1B[?6l\x1B[r\x1B[2;1HTop line: A's, bottom line: X's, this line, nothing more. Push <RETURN>");
-        _emulation->receiveData(data.data(), data.length());
-    }else if(buf[0] == '3' && len == 1) {
-        QByteArray data("\x1B[2;1H\x1B[0J\x1B[1;2HB\x1B[1D\x1B[4h******************************************************************************\x1B[4l\x1B[4;1HTest of 'Insert Mode'. The top line should be 'A*** ... ***B'. Push <RETURN>");
-        _emulation->receiveData(data.data(), data.length());
-    }else if(buf[0] == '4' && len == 1) {
-        QByteArray data("\x1BM\x1B[2K\x1B[1;2H\x1B[78P\x1B[4;1HTest of 'Delete Character'. The top line should be 'AB'. Push <RETURN>");
-        _emulation->receiveData(data.data(), data.length());
-    }else if(buf[0] == '5' && len == 1) {
-        QByteArray data("\x1B[4l\x1B[4;1HTest of 'Insert Mode'. The top line should be 'A*** ... ***B'. Push <RETURN>");
-        _emulation->receiveData(data.data(), data.length());
-    }else if (buf[0] == '6' && len == 1) {
-        QByteArray data("\x1BM\x1B[2K\x1B[4;1HTest of 'Delete Character'. The top line should be 'AB'. Push <RETURN>");
-        _emulation->receiveData(data.data(), data.length());
-    }else{
-        _emulation->receiveData( buf, len );
-    }
-
+//    if(buf[0] == 'l') {
+//        QByteArray dat("\033[31mHello\033[0m World");
+//        _emulation->receiveData(dat.data(), dat.length());
+//    }
+    _emulation->receiveData( buf, len );
     emit receivedData( QString::fromLatin1( buf, len ) );
 }
 
@@ -944,17 +922,54 @@ void Session::setSize(const QSize & size)
 
     emit resizeRequest(size);
 }
+
 int Session::foregroundProcessId() const
 {
-    return _shellProcess->foregroundProcessGroup();
+    return 0;
+//    return _shellProcess->foregroundProcessGroup();
 }
+
 int Session::processId() const
 {
-    return _shellProcess->pid();
+    return 0;
+//    return _shellProcess->pid();
 }
+
 int Session::getPtySlaveFd() const
 {
     return ptySlaveFd;
+}
+
+void Session::onParse(const QByteArray& buf)
+{
+    static bool isok = true;
+
+    _emulation->receiveData(buf.data(), buf.length());
+    return;
+    {
+             QByteArray buf("jEh你好abc");
+             _emulation->receiveData(buf.data(), buf.length());
+     }
+     {
+             QByteArray buf("\033[31mHello\033[0m World");
+             _emulation->receiveData(buf.data(), buf.length());
+     }
+    if (isok) {
+             QByteArray buf("\x1B[?3l");
+             _emulation->receiveData(buf.data(), buf.length());
+     } else  {
+             QByteArray buf("\x1B[?3h");
+             _emulation->receiveData(buf.data(), buf.length());
+     }
+    isok = !isok;
+     {
+         char tt[] = { 0x0d, 0x0a, 0x1b, 0x5b, 0x30, 0x6d, 0x1b, 0x5b, 0x30, 0x31, 0x3b, 0x33, 0x34, 0x6d, 0x63, 0x6f, 0x6e, 0x66, 0x1b, 0x5b, 0x30, 0x6d, 0x20,
+             0x20, 0x1b, 0x5b, 0x30, 0x31, 0x3b, 0x33, 0x34, 0x6d, 0x76, 0x6f, 0x6c, 0x75, 0x6d, 0x65, 0x1b, 0x5b, 0x30, 0x6d, 0x0d, 0x0a, 0x1b, 0x5d,
+             0x30, 0x3b, 0x61, 0x62, 0x63, 0x40, 0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, 0x3a, 0x7e, 0x07, 0x5b, 0x61, 0x62, 0x63, 0x40,
+             0x6c, 0x6f, 0x63, 0x61, 0x6c, 0x68, 0x6f, 0x73, 0x74, 0x20, 0x7e, 0x5d, 0x24, 0x20, 0x00};
+         QByteArray buf(tt);
+         _emulation->receiveData(buf.data(), buf.length());
+     }
 }
 
 SessionGroup::SessionGroup()

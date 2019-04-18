@@ -30,6 +30,7 @@
 
 // Konsole
 #include "Character.h"
+
 #include "History.h"
 
 #define MODE_Origin    0
